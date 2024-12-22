@@ -2,7 +2,7 @@
 
 This is a mock internship for secondary school students to learn about the software development process. The project is inspired by the popular Chrome Dino Game. 
 
-Students will take over a previous intern's work and continue to develop the game. They will learn about the software development process, including documentation and code maintainbility, while also learning a new library, Pygame - Community Edition.
+Students will take over a previous intern's work and continue to develop the game. They will learn about the software development process, including documentation and code maintainability, while also learning a new library, Pygame - Community Edition.
 
 ## Getting Started
 
@@ -14,7 +14,7 @@ Students will take over a previous intern's work and continue to develop the gam
 
 ## Add Your Features
 
-Now that you have the base game from the previous intern, read through the code and understand how the game works. You can go on [Pygame-CE Docs](https://pyga.me/docs/index.html) to learn more about the library. 
+Now that you have the base game from the previous intern, read through the code and understand how the game works. You can go to [Pygame-CE Docs](https://pyga.me/docs/index.html) to learn more about the library. 
 
 Once you are familiar, begin adding your features to the game. Make sure to document well for any future interns who will take over your work!
 
