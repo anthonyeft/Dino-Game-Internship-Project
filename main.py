@@ -26,7 +26,9 @@ score_surf = game_font.render("SCORE?", False, "Black")
 score_rect = score_surf.get_rect(center=(400, 50))
 
 # Load sprite assets
-player_surf = pygame.image.load("graphics/player/player_walk_1.png").convert_alpha()
+player_surf = pygame.image.load(
+    "graphics/player/player_walk_1.png"
+).convert_alpha()
 player_rect = player_surf.get_rect(bottomleft=(25, GROUND_Y))
 egg_surf = pygame.image.load("graphics/egg/egg_1.png").convert_alpha()
 egg_rect = egg_surf.get_rect(bottomleft=(800, GROUND_Y))
