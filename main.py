@@ -1,7 +1,7 @@
 """Dino Game in Python
 
-A game similar to the famous Chrome Dino Game, built using pygame.
-Made by intern: @bassemfarid, no one or nothing else.
+A game similar to the famous Chrome Dino Game, built using pygame-ce.
+Made by intern: @bassemfarid, no one or nothing else. 🤖
 """
 
 import pygame
@@ -19,10 +19,10 @@ JUMP_GRAVITY_START_SPEED = -20  # The speed at which the player jumps
 players_gravity_speed = 0  # The current speed at which the player falls
 
 # Load level assets
-sky_surf = pygame.image.load("graphics/level/sky.png").convert()
-ground_surf = pygame.image.load("graphics/level/ground.png").convert()
-game_font = pygame.font.Font("font/Pixeltype.ttf", 50)
-score_surf = game_font.render("SCORE", False, "Black")
+SKY_SURF = pygame.image.load("graphics/level/sky.png").convert()
+GROUND_SURF = pygame.image.load("graphics/level/ground.png").convert()
+game_font = pygame.font.Font(pygame.font.get_default_font(), 50)
+score_surf = game_font.render("SCORE?", False, "Black")
 score_rect = score_surf.get_rect(center=(400, 50))
 
 # Load sprite assets
@@ -57,8 +57,8 @@ while running:
         screen.fill("purple")  # Wipe the screen
 
         # Blit the level assets
-        screen.blit(sky_surf, (0, 0))
-        screen.blit(ground_surf, (0, GROUND_Y))
+        screen.blit(SKY_SURF, (0, 0))
+        screen.blit(GROUND_SURF, (0, GROUND_Y))
         pygame.draw.rect(screen, "#c0e8ec", score_rect)
         pygame.draw.rect(screen, "#c0e8ec", score_rect, 10)
         screen.blit(score_surf, score_rect)
@@ -87,6 +87,6 @@ while running:
     # flip() the display to put your work on screen
     pygame.display.flip()
 
-    clock.tick(60)  # limits FPS to 60
+    clock.tick(60)  # Limits game loop to 60 FPS
 
 pygame.quit()
