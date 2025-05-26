@@ -10,10 +10,10 @@ import pygame
 pygame.init()
 screen = pygame.display.set_mode((800, 400))
 clock = pygame.time.Clock()
-running = True  # Pygame main loop, kills the pygame when False
+running = True  # Pygame main loop, kills pygame when False
 
 # Game state variables
-is_playing = True  # Whether the game is currently being played
+is_playing = True  # Whether in game or in menu
 GROUND_Y = 300  # The Y-coordinate of the ground level
 JUMP_GRAVITY_START_SPEED = -20  # The speed at which the player jumps
 players_gravity_speed = 0  # The current speed at which the player falls
@@ -26,9 +26,7 @@ score_surf = game_font.render("SCORE?", False, "Black")
 score_rect = score_surf.get_rect(center=(400, 50))
 
 # Load sprite assets
-player_surf = pygame.image.load(
-    "graphics/player/player_walk_1.png"
-).convert_alpha()
+player_surf = pygame.image.load("graphics/player/player_walk_1.png").convert_alpha()
 player_rect = player_surf.get_rect(bottomleft=(25, GROUND_Y))
 egg_surf = pygame.image.load("graphics/egg/egg_1.png").convert_alpha()
 egg_rect = egg_surf.get_rect(bottomleft=(800, GROUND_Y))
@@ -86,7 +84,7 @@ while running:
     else:
         screen.fill("black")
 
-    # flip() the display to put your work on screen
+    # flip the display to put your work on screen
     pygame.display.flip()
 
     clock.tick(60)  # Limits game loop to 60 FPS
