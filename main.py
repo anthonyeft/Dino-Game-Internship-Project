@@ -144,7 +144,7 @@ run_frames = load_animation("graphics/player/Run.png", 10)
 jump_frames = load_animation("graphics/player/Jump.png", 10)
 idle_frames = load_animation("graphics/player/Idle.png", 7)
 shoot_frames = load_animation("graphics/player/Shoot.png", 12)
-explosion_frames = load_multi_img_animation("graphics/effects/Explosion_1/", 10)
+explosion_frames = load_multi_img_animation("graphics/effects/Explosion_2/", 10)
 
 # Scale up the character so it fits with the background
 PLAYER_SCALE = 1.3
@@ -238,7 +238,8 @@ while running:
             player_surf = shoot_frames[frame_idx]
             
             if now - shoot_start_time >= SHOOT_DELAY:
-                explosion_rect.center = egg_rect.center # start explosion where egg was
+                explosion_rect.centerx = egg_rect.centerx  # center explosion horizontally on the egg
+                explosion_rect.centery = egg_rect.centery - 18 # adjust for explosion centering in the image
                 exploding = True
                 explosion_frame_idx = 0
                 explosion_start_time = now
