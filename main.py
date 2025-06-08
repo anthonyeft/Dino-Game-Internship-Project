@@ -13,18 +13,17 @@ score = 0
 distance_accumulator = 0
 GROUND_Y = 365
 JUMP_GRAVITY_START_SPEED = -20
-BASE_UNIT = 80 # How many pixels per each spatial unit in the game - used for score counting
 players_gravity_speed = 0
 is_jumping = False
 is_shooting = False
 shoot_start_time = 0
-SHOOT_DELAY = 200  # milliseconds
+SHOOT_DELAY = 180  # milliseconds
 
 # Scrolling settings
 scroll_speed = 5.0
 scroll_offset = 0.0
-speed_increment = 0.003
-speed_increment_decay = 0.00000056 # Increment decay so the game doesn't get too hard - kind of like subway surfers
+SPEED_INCREMENT = 0.003
+MAX_SPEED = 15.0 # Max speed of the game
 
 
 # Load high score
@@ -156,9 +155,9 @@ shoot_frames = scale_frames(shoot_frames, PLAYER_SCALE)
 explosion_frames = scale_frames(explosion_frames, 0.2)
 
 # player setup
-run_speed = 40 # ms delay between frames for running animation
+run_speed = 60 # ms delay between frames for running animation
 JUMP_SPEED = 50 # ms delay between frames for jumping animation
-SHOOT_SPEED = 14 # ms delay between frames for shooting animation (actually smaller than frame time so not necessary)
+SHOOT_SPEED = 15 # ms delay between frames for shooting animation (actually smaller than frame time so not necessary)
 player_surf = run_frames[0]
 player_rect = player_surf.get_rect(midbottom=(80, GROUND_Y))
 
@@ -206,16 +205,16 @@ while running:
         screen.fill("black")
         scroll_step = round(scroll_speed)
         scroll_offset += scroll_step
+        distance_accumulator += scroll_step
 
         screen.blit(sky_surf, (0, 0))
         draw_parallax(back_surf, scroll_offset, 0.85)
         draw_parallax(buildings_back_surf, scroll_offset, 0.95)
         draw_parallax(ground_surf, scroll_offset, 1)
 
-        distance_accumulator += scroll_speed
-        while distance_accumulator >= BASE_UNIT:
+        if distance_accumulator >= 100:
             score += 1
-            distance_accumulator -= BASE_UNIT
+            distance_accumulator = 0
         display_score(score, high_score)
 
         egg_rect.x -= scroll_step
@@ -223,12 +222,7 @@ while running:
             egg_rect.left = 800
         screen.blit(egg_surf, egg_rect)
 
-        players_gravity_speed += 1
-        player_rect.y += players_gravity_speed
-        if player_rect.bottom > GROUND_Y:
-            player_rect.bottom = GROUND_Y
-            is_jumping = False
-
+        
         now = pygame.time.get_ticks()
         if is_shooting:
             if now - last_frame_time > SHOOT_SPEED and frame_idx < len(jump_frames) - 1:
@@ -249,10 +243,19 @@ while running:
 
             
         elif is_jumping:
+            players_gravity_speed += 1
+            player_rect.y += players_gravity_speed
+
             if now - last_frame_time > JUMP_SPEED and frame_idx < len(jump_frames) - 1:
                 frame_idx += 1
                 last_frame_time = now
+            
             player_surf = jump_frames[frame_idx]
+
+            if player_rect.bottom >= GROUND_Y: # We don't need to check for landing all the time, only when we are jumping
+                player_rect.bottom = GROUND_Y
+                is_jumping = False
+
         else:
             if now - last_frame_time > run_speed:
                 frame_idx = (frame_idx + 1) % len(run_frames)
@@ -289,9 +292,9 @@ while running:
                 with open(HIGH_SCORE_FILE, "w") as f:
                     f.write(str(high_score))
 
-        speed_increment = max(speed_increment - speed_increment_decay, 0.0002)
-        scroll_speed += speed_increment
-        run_speed -= speed_increment
+        if scroll_speed < MAX_SPEED:
+            scroll_speed += SPEED_INCREMENT
+            run_speed -= SPEED_INCREMENT / 2 # make the run animation faster as speed increases
 
     else:
         end_screen_state, idle_frame_idx, last_idle_frame_time = end_screen(score, events, idle_frame_idx, last_idle_frame_time)
@@ -304,13 +307,13 @@ while running:
             players_gravity_speed = 0
             is_jumping = False
             is_shooting = False
+            shoot_start_time = 0
             exploding = False
             explosion_frame_idx = 0
             explosion_start_time = 0
             scroll_speed = 5.0
             scroll_offset = 0.0
-            speed_increment = 0.003
-            run_speed = 40
+            run_speed = 60
             egg_rect.left = 800
             frame_idx = 0
             last_frame_time = pygame.time.get_ticks()
