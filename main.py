@@ -17,14 +17,14 @@ players_gravity_speed = 0
 is_jumping = False
 is_shooting = False
 shoot_start_time = 0
-SHOOT_DELAY = 180  # milliseconds
+SHOOT_DELAY = 180  # ms
+current_screen = "start"  # Possible values: "start", "game", "settings"
 
 # Scrolling settings
 scroll_speed = 5.0
 scroll_offset = 0.0
 SPEED_INCREMENT = 0.003
 MAX_SPEED = 15.0 # Max speed of the game
-
 
 # Load high score
 HIGH_SCORE_FILE = "highscore.txt"
@@ -43,8 +43,17 @@ buildings_back_surf = pygame.transform.scale(raw_buildings_back_img, (800, 400))
 back_surf = pygame.transform.scale(raw_back_img, (800, 400))
 
 # Set up the game font
-game_font = pygame.font.Font("graphics/font/PixeloidMono.ttf", 24)
-end_screen_font = pygame.font.Font("graphics/font/PixeloidMono.ttf", 36)
+GAME_FONT = pygame.font.Font("graphics/font/PixeloidMono.ttf", 24)
+SCREEN_FONT = pygame.font.Font("graphics/font/PixeloidMono.ttf", 36)
+
+# Set up the background music
+
+# Set up the game ui
+ICON_SIZE = 64
+play_icon = pygame.image.load("graphics/ui/play_icon.png").convert_alpha()
+settings_icon = pygame.image.load("graphics/ui/settings_icon.png").convert_alpha()
+play_icon = pygame.transform.scale(play_icon, (ICON_SIZE, ICON_SIZE))
+settings_icon = pygame.transform.scale(settings_icon, (ICON_SIZE, ICON_SIZE))
 
 # Enemy egg setup
 egg_surf = pygame.image.load("graphics/egg/egg_1.png").convert_alpha()
@@ -79,7 +88,7 @@ def scale_frames(frames, factor):
 
 def display_score(score, high_score):
     score_text = f"HI {high_score}    {score:05d}"
-    score_surf = game_font.render(score_text, False, "white")
+    score_surf = GAME_FONT.render(score_text, False, "white")
     score_rect = score_surf.get_rect(topright=(760, 20))
     screen.blit(score_surf, score_rect)
 
@@ -88,14 +97,70 @@ def draw_parallax(surface: pygame.Surface, offset: float, ratio: float):
     screen.blit(surface, (-scroll, 0))
     screen.blit(surface, (-scroll + surface.get_width(), 0))
 
+def start_screen(events, idle_frame_idx, last_idle_frame_time):
+    screen.fill((20, 30, 60))
+    
+    title_font = pygame.font.Font("graphics/font/PixeloidMono.ttf", 40)
+    title_surf = title_font.render("GANGSTER DINO", True, "white")
+    title_rect = title_surf.get_rect(center=(400, 60))
+    screen.blit(title_surf, title_rect)
+
+    now = pygame.time.get_ticks()
+    if now - last_idle_frame_time > IDLE_ANIM_DELAY:
+        idle_frame_idx = (idle_frame_idx + 1) % len(idle_frames)
+        last_idle_frame_time = now
+    idle_frame = idle_frames[idle_frame_idx]
+    idle_rect = idle_frame.get_rect(center=(400, 120))
+    screen.blit(idle_frame, idle_rect)
+
+    play_rect = play_icon.get_rect(center=(360, 300))
+    settings_rect = settings_icon.get_rect(center=(440, 300))
+
+    screen.blit(play_icon, play_rect)
+    screen.blit(settings_icon, settings_rect)
+
+    mouse_pos = pygame.mouse.get_pos()
+    clicked = any(event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 for event in events)  # if any of the events (make it an iterable) is a left mouse click
+
+    if play_rect.collidepoint(mouse_pos) and clicked:
+        return "game", idle_frame_idx, last_idle_frame_time
+    elif settings_rect.collidepoint(mouse_pos) and clicked:
+        return "settings", idle_frame_idx, last_idle_frame_time
+
+    return "start", idle_frame_idx, last_idle_frame_time
+
+def settings_screen(events):
+    screen.fill((30, 30, 40))
+    font = pygame.font.Font("graphics/font/PixeloidMono.ttf", 28)
+    text_surf = font.render("Settings (coming soon)", True, "white")
+    text_rect = text_surf.get_rect(center=(400, 180))
+    screen.blit(text_surf, text_rect)
+
+    back_surf = font.render("BACK", True, "black")
+    back_rect = back_surf.get_rect(center=(400, 320))
+    back_box = back_rect.inflate(40, 18)
+
+    mouse_pos = pygame.mouse.get_pos()
+    clicked = any(event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 for event in events)  # if any of the events (make it an iterable) is a left mouse click
+
+    if back_box.collidepoint(mouse_pos):
+        pygame.draw.rect(screen, "yellow", back_box, border_radius=6)
+        if clicked:
+            return "start"
+    else:
+        pygame.draw.rect(screen, "orange", back_box, border_radius=6)
+
+    screen.blit(back_surf, back_rect)
+    return "settings"
+
 def end_screen(score, events, idle_frame_idx, last_idle_frame_time):
     screen.fill((50, 60, 100))
 
-    title_surf = end_screen_font.render("GAME OVER", True, "white")
+    title_surf = SCREEN_FONT.render("GAME OVER", True, "white")
     title_rect = title_surf.get_rect(center=(400, 50))
     screen.blit(title_surf, title_rect)
 
-    score_surf = game_font.render(f"Score: {score}", True, "white")
+    score_surf = GAME_FONT.render(f"Score: {score}", True, "white")
     score_rect = score_surf.get_rect(center=(400, 90))
     screen.blit(score_surf, score_rect)
 
@@ -200,125 +265,132 @@ while running:
                     is_shooting = True
                     shoot_start_time = pygame.time.get_ticks()
 
+    if current_screen == "start":
+        current_screen, idle_frame_idx, last_idle_frame_time = start_screen(events, idle_frame_idx, last_idle_frame_time)
 
-    if is_playing:
-        screen.fill("black")
-        scroll_step = round(scroll_speed)
-        scroll_offset += scroll_step
-        distance_accumulator += scroll_step
+    elif current_screen == "settings":
+        current_screen = settings_screen(events)
 
-        screen.blit(sky_surf, (0, 0))
-        draw_parallax(back_surf, scroll_offset, 0.85)
-        draw_parallax(buildings_back_surf, scroll_offset, 0.95)
-        draw_parallax(ground_surf, scroll_offset, 1)
+    elif current_screen == "game":
+        if is_playing:
+            screen.fill("black")
+            scroll_step = round(scroll_speed)
+            scroll_offset += scroll_step
+            distance_accumulator += scroll_step
 
-        if distance_accumulator >= 100:
-            score += 1
-            distance_accumulator = 0
-        display_score(score, high_score)
+            screen.blit(sky_surf, (0, 0))
+            draw_parallax(back_surf, scroll_offset, 0.85)
+            draw_parallax(buildings_back_surf, scroll_offset, 0.95)
+            draw_parallax(ground_surf, scroll_offset, 1)
 
-        egg_rect.x -= scroll_step
-        if egg_rect.right <= 0:
-            egg_rect.left = 800
-        screen.blit(egg_surf, egg_rect)
+            if distance_accumulator >= 100:
+                score += 1
+                distance_accumulator = 0
+            display_score(score, high_score)
 
-        
-        now = pygame.time.get_ticks()
-        if is_shooting:
-            if now - last_frame_time > SHOOT_SPEED and frame_idx < len(jump_frames) - 1:
-                frame_idx += 1
-                last_frame_time = now
-            
-            player_surf = shoot_frames[frame_idx]
-            
-            if now - shoot_start_time >= SHOOT_DELAY:
-                explosion_rect.centerx = egg_rect.centerx  # center explosion horizontally on the egg
-                explosion_rect.centery = egg_rect.centery - 18 # adjust for explosion centering in the image
-                exploding = True
-                explosion_frame_idx = 0
-                explosion_start_time = now
-
-                egg_rect.left = 800  # Remove egg
-                is_shooting = False
+            egg_rect.x -= scroll_step
+            if egg_rect.right <= 0:
+                egg_rect.left = 800
+            screen.blit(egg_surf, egg_rect)
 
             
-        elif is_jumping:
-            players_gravity_speed += 1
-            player_rect.y += players_gravity_speed
+            now = pygame.time.get_ticks()
+            if is_shooting:
+                if now - last_frame_time > SHOOT_SPEED and frame_idx < len(jump_frames) - 1:
+                    frame_idx += 1
+                    last_frame_time = now
+                
+                player_surf = shoot_frames[frame_idx]
+                
+                if now - shoot_start_time >= SHOOT_DELAY:
+                    explosion_rect.centerx = egg_rect.centerx  # center explosion horizontally on the egg
+                    explosion_rect.centery = egg_rect.centery - 18 # adjust for explosion centering in the image
+                    exploding = True
+                    explosion_frame_idx = 0
+                    explosion_start_time = now
 
-            if now - last_frame_time > JUMP_SPEED and frame_idx < len(jump_frames) - 1:
-                frame_idx += 1
-                last_frame_time = now
-            
-            player_surf = jump_frames[frame_idx]
+                    egg_rect.left = 800  # Remove egg
+                    is_shooting = False
 
-            if player_rect.bottom >= GROUND_Y: # We don't need to check for landing all the time, only when we are jumping
-                player_rect.bottom = GROUND_Y
-                is_jumping = False
+                
+            elif is_jumping:
+                players_gravity_speed += 1
+                player_rect.y += players_gravity_speed
+
+                if now - last_frame_time > JUMP_SPEED and frame_idx < len(jump_frames) - 1:
+                    frame_idx += 1
+                    last_frame_time = now
+                
+                player_surf = jump_frames[frame_idx]
+
+                if player_rect.bottom >= GROUND_Y: # We don't need to check for landing all the time, only when we are jumping
+                    player_rect.bottom = GROUND_Y
+                    is_jumping = False
+
+            else:
+                if now - last_frame_time > run_speed:
+                    frame_idx = (frame_idx + 1) % len(run_frames)
+                    last_frame_time = now
+                player_surf = run_frames[frame_idx]
+
+            screen.blit(player_surf, player_rect)
+
+            # play explosion animation if active
+            if exploding:
+                explosion_rect.x -= scroll_step
+                if now - explosion_start_time > EXPLOSION_SPEED:
+                    explosion_frame_idx += 1
+                    explosion_start_time = now
+                if explosion_frame_idx < len(explosion_frames):
+                    explosion_surf = explosion_frames[explosion_frame_idx]
+                    screen.blit(explosion_surf, explosion_rect)
+                else:
+                    exploding = False  # animation done
+
+            hitbox_rect = pygame.Rect(
+                player_rect.left + HITBOX_OFFSET_X,
+                player_rect.top + HITBOX_OFFSET_Y,
+                HITBOX_WIDTH,
+                HITBOX_HEIGHT
+            )
+            pygame.draw.rect(screen, "red", hitbox_rect, 1)
+
+            if egg_rect.colliderect(hitbox_rect):
+                is_playing = False
+
+                if score > high_score:
+                    high_score = score
+                    with open(HIGH_SCORE_FILE, "w") as f:
+                        f.write(str(high_score))
+
+            if scroll_speed < MAX_SPEED:
+                scroll_speed += SPEED_INCREMENT
+                run_speed -= SPEED_INCREMENT / 2 # make the run animation faster as speed increases
 
         else:
-            if now - last_frame_time > run_speed:
-                frame_idx = (frame_idx + 1) % len(run_frames)
-                last_frame_time = now
-            player_surf = run_frames[frame_idx]
-
-        screen.blit(player_surf, player_rect)
-
-        # play explosion animation if active
-        if exploding:
-            explosion_rect.x -= scroll_step
-            if now - explosion_start_time > EXPLOSION_SPEED:
-                explosion_frame_idx += 1
-                explosion_start_time = now
-            if explosion_frame_idx < len(explosion_frames):
-                explosion_surf = explosion_frames[explosion_frame_idx]
-                screen.blit(explosion_surf, explosion_rect)
-            else:
-                exploding = False  # animation done
-
-        hitbox_rect = pygame.Rect(
-            player_rect.left + HITBOX_OFFSET_X,
-            player_rect.top + HITBOX_OFFSET_Y,
-            HITBOX_WIDTH,
-            HITBOX_HEIGHT
-        )
-        pygame.draw.rect(screen, "red", hitbox_rect, 1)
-
-        if egg_rect.colliderect(hitbox_rect):
-            is_playing = False
-
-            if score > high_score:
-                high_score = score
-                with open(HIGH_SCORE_FILE, "w") as f:
-                    f.write(str(high_score))
-
-        if scroll_speed < MAX_SPEED:
-            scroll_speed += SPEED_INCREMENT
-            run_speed -= SPEED_INCREMENT / 2 # make the run animation faster as speed increases
-
-    else:
-        end_screen_state, idle_frame_idx, last_idle_frame_time = end_screen(score, events, idle_frame_idx, last_idle_frame_time)
-        if end_screen_state == "quit":
-            running = False
-        elif end_screen_state == "restart":
-            is_playing = True
-            score = 0
-            distance_accumulator = 0
-            players_gravity_speed = 0
-            is_jumping = False
-            is_shooting = False
-            shoot_start_time = 0
-            exploding = False
-            explosion_frame_idx = 0
-            explosion_start_time = 0
-            scroll_speed = 5.0
-            scroll_offset = 0.0
-            run_speed = 60
-            egg_rect.left = 800
-            frame_idx = 0
-            last_frame_time = pygame.time.get_ticks()
-            player_rect.midbottom = (80, GROUND_Y)
-            player_surf = run_frames[0]
+            end_screen_state, idle_frame_idx, last_idle_frame_time = end_screen(score, events, idle_frame_idx, last_idle_frame_time)
+            if end_screen_state == "quit":
+                running = False
+            elif end_screen_state == "restart":
+                is_playing = True
+                current_screen = "game"
+                score = 0
+                distance_accumulator = 0
+                players_gravity_speed = 0
+                is_jumping = False
+                is_shooting = False
+                shoot_start_time = 0
+                exploding = False
+                explosion_frame_idx = 0
+                explosion_start_time = 0
+                scroll_speed = 5.0
+                scroll_offset = 0.0
+                run_speed = 60
+                egg_rect.left = 800
+                frame_idx = 0
+                last_frame_time = pygame.time.get_ticks()
+                player_rect.midbottom = (80, GROUND_Y)
+                player_surf = run_frames[0]
 
     pygame.display.flip()
     clock.tick(60)
