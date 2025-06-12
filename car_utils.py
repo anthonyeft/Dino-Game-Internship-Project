@@ -15,9 +15,9 @@ def get_car_hitbox_rect(surf: pygame.Surface, x: int, y: int, car_hitbox_trim: i
 
 def spawn_car(
     x_start: int,
-    car_surfs: List,
-    active_car_surfs: List,
-    active_car_rects: List,
+    car_surfs: List[pygame.Surface],
+    active_car_surfs: List[pygame.Surface],
+    active_car_rects: List[pygame.Rect],
     ground_y: int,
     car_hitbox_trim: int
 ) -> None:
@@ -31,7 +31,7 @@ def spawn_car(
     active_car_rects.append(rect)
 
 
-def is_on_car(car: pygame.Rect, player: pygame.Rect):
+def is_on_car(car: pygame.Rect, player: pygame.Rect) -> bool:
     """
     Determines if the player is standing on top of a car.
     """

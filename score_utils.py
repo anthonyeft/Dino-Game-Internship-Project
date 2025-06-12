@@ -1,6 +1,6 @@
 import pygame
 
-def display_score(score: int, high_score: float, font: pygame.font.Font, screen: pygame.Surface) -> None:
+def display_score(score: int, high_score: int, font: pygame.font.Font, screen: pygame.Surface) -> None:
     """
     Display the current score and high score on the screen.
     """
